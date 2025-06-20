@@ -3,7 +3,6 @@ import re
 import os
 import subprocess
 from datetime import datetime
-import time
 from serial.tools import list_ports
 import unicodedata
 
