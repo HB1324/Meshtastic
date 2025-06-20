@@ -20,7 +20,7 @@ This Python utility connects to a Meshtastic device, extracts node information u
 - Python 3.7+
 - [Meshtastic Python CLI](https://meshtastic.org/docs/software/python/cli/)
 - PySerial (`pyserial`)
-- See "[Setup Requirements](https://github.com/HB1324/Meshtastic/tree/main/Setup%20Requirements)" for automated installations
+- See [setup_meshtastic](https://github.com/HB1324/Meshtastic/tree/main/Setup%20Requirements) for automated installations
 
 Install the required Python packages:
 
