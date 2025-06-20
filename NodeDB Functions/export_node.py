@@ -8,21 +8,21 @@ from serial.tools import list_ports
 import unicodedata
 
 
-def find_meshtastic_port():
+def find_all_meshtastic_ports():
+    """Returns a list of all ports that appear to be Meshtastic devices."""
     ports = list_ports.comports()
+    matched_ports = []
     for port in ports:
         if "Silicon Labs" in port.description or "USB" in port.description or "CP210" in port.description:
             print(f"✅ Found device on port: {port.device}")
-            return port.device
-    print("⚠️ No Meshtastic-compatible device found.")
-    return None
+            matched_ports.append(port.device)
+    if not matched_ports:
+        print("⚠️ No Meshtastic-compatible devices found.")
+    return matched_ports
 
 
-def get_meshtastic_output():
-    port = find_meshtastic_port()
-    if not port:
-        return ""
-
+def get_meshtastic_output(port):
+    """Gets the raw --nodes output for a given port."""
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
 
@@ -38,34 +38,25 @@ def get_meshtastic_output():
         )
         return result.stdout
     except subprocess.CalledProcessError as e:
-        print("❌ Failed to run 'meshtastic --nodes':", e)
-        with open("meshtastic_raw_output.txt", "w", encoding='utf-8', errors='replace') as f:
+        print(f"❌ Failed to run 'meshtastic --nodes' on {port}:", e)
+        with open(f"meshtastic_raw_output_{port.replace(':', '')}.txt", "w", encoding='utf-8', errors='replace') as f:
             f.write("STDOUT:\n")
             f.write(e.stdout or "")
             f.write("\n\nSTDERR:\n")
             f.write(e.stderr or "")
-        print("⚠️ Raw output written to meshtastic_raw_output.txt for inspection.")
+        print(f"⚠️ Raw output written to meshtastic_raw_output_{port}.txt for inspection.")
         return ""
 
 
 def clean_text(text):
-    """Cleans text for CSV output by removing emojis, degree symbols, and unprintable characters."""
     if not isinstance(text, str):
         return text
 
-    # Normalize Unicode
     text = unicodedata.normalize('NFKD', text)
-
-    # Remove degree symbol and non-breaking space
     text = text.replace('°', '')
     text = text.replace('\u00A0', ' ')
-
-    # Remove control characters (invisible junk)
     text = ''.join(c for c in text if not unicodedata.category(c).startswith('C'))
-
-    # Remove any character that isn't basic ASCII (optional, aggressive filter)
     text = ''.join(c for c in text if 32 <= ord(c) <= 126)
-
     return text.strip()
 
 
@@ -79,7 +70,6 @@ def parse_meshtastic_table(output):
 
     header_line = data_lines[0]
     headers = [col.strip() for col in header_line.split('│') if col.strip()]
-
     timestamp_now = datetime.now().date().isoformat()
     rows = []
 
@@ -87,11 +77,9 @@ def parse_meshtastic_table(output):
         columns = [col.strip() for col in line.split('│') if col.strip()]
         if len(columns) == len(headers):
             row = dict(zip(headers, columns))
-
             lat = row.get('Latitude', '')
             lon = row.get('Longitude', '')
-            coords_raw = f"{lat} {lon}" if lat and lon else ''
-            coords = clean_text(coords_raw)
+            coords = clean_text(f"{lat} {lon}" if lat and lon else '')
 
             last_heard_raw = row.get('LastHeard', '')
             last_heard_date = ''
@@ -125,21 +113,13 @@ def parse_meshtastic_table(output):
     return rows
 
 
-def write_csv(rows, filename='nodes.csv'):
+def write_csv(rows, port, filename_prefix='nodes'):
+    safe_port = port.replace(':', '').replace('/', '_')
+    filename = f"{filename_prefix}_{safe_port}.csv"
     fieldnames = [
-        'Timestamp',
-        'Hardware Model',
-        'Long Name',
-        'Short Name',
-        'User ID',
-        'Role',
-        'Position',
-        'Battery',
-        'Channel util.',
-        'Tx air util.',
-        'SNR',
-        'Hops',
-        'LastHeard'
+        'Timestamp', 'Hardware Model', 'Long Name', 'Short Name',
+        'User ID', 'Role', 'Position', 'Battery',
+        'Channel util.', 'Tx air util.', 'SNR', 'Hops', 'LastHeard'
     ]
 
     with open(filename, 'w', newline='', encoding='utf-8') as f:
@@ -152,22 +132,26 @@ def write_csv(rows, filename='nodes.csv'):
 
 
 def main():
-    while True:
-        print("\n🚀 Starting Meshtastic node export...\n")
-        raw_output = get_meshtastic_output()
+    print("🔍 Scanning for all Meshtastic devices...")
+    ports = find_all_meshtastic_ports()
+
+    if not ports:
+        print("🚫 No Meshtastic devices found. Exiting.")
+        return
+
+    for port in ports:
+        print(f"\n🚀 Starting export for device on {port}...")
+        raw_output = get_meshtastic_output(port)
         if raw_output:
             rows = parse_meshtastic_table(raw_output)
             if rows:
-                write_csv(rows)
+                write_csv(rows, port)
             else:
-                print("⚠️ No valid rows to write to CSV.")
+                print(f"⚠️ No valid rows to write from device {port}.")
         else:
-            print("⚠️ No output from meshtastic to process.")
+            print(f"⚠️ No output from device {port} to process.")
 
-        print("\n✅ Export complete. Program Termination in 3 seconds...")
-        time.sleep(3)
-        print("👋 Program Terminated. Goodbye!")
-        break
+    print("\n✅ All devices processed. Program Terminated.")
 
 
 if __name__ == "__main__":
