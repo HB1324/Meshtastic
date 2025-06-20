@@ -1,4 +1,4 @@
-# 📡 Meshtastic Node Exporter
+# 📡 Meshtastic Node Export
 
 This Python utility connects to a Meshtastic device, extracts node information using the `meshtastic --nodes` command, cleans and structures the data, and outputs a clean `nodes.csv` file — ready for Excel or Google Sheets.
 
@@ -20,10 +20,11 @@ This Python utility connects to a Meshtastic device, extracts node information u
 - Python 3.7+
 - [Meshtastic Python CLI](https://meshtastic.org/docs/software/python/cli/)
 - PySerial (`pyserial`)
+- See [Setup Requirements](https://github.com/HB1324/Meshtastic/tree/main/Setup%20Requirements) for quick installations
 
 Install the required Python packages:
 
-```bash
+```
 pip install pyserial meshtastic
 ```
 
@@ -38,9 +39,9 @@ pip install pyserial meshtastic
 ### 🔸 Option 2: Run from Command Prompt
 1. Open the folder containing `export_node.py` in Command Prompt.
 2. Run the script with:
-   ```bash
-   py export_node.py
-   ```
+```
+py export_node.py
+  ```
 
 ---
 
@@ -70,7 +71,7 @@ The script creates a file named `nodes.csv` in the same folder. It includes:
 
 - Ensure your device is connected and recognized as a USB or Silicon Labs device.
 - You can test your device with:
-  ```bash
+  ```
   meshtastic --nodes
   ```
 - If the script fails, a log file named `meshtastic_raw_output.txt` will be created with debug info.

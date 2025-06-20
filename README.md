@@ -36,7 +36,7 @@ Together, we can build a richer experience around Meshtastic technology.
 ## About Meshtastic
 
 Learn more about the core Meshtastic project here:  
-[https://meshtastic.org](https://meshtastic.org)  
+[Meshtastic Website](https://meshtastic.org)  
 
 ---
 
