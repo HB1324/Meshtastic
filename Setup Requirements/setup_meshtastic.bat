@@ -1,4 +1,7 @@
 bat_script_content = """@echo off
+:: Publisher: CRY0NIX5018
+:: Setup script for Meshtastic environment
+
 echo Checking Python version...
 py -V
 
