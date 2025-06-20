@@ -1,4 +1,4 @@
-readme_welcome = """
+
 # Meshtastic - Extended Functionality Repository
 
 ---
@@ -41,4 +41,3 @@ Learn more about the core Meshtastic project here:
 ---
 
 Thank you for visiting and happy meshing!
-"""
