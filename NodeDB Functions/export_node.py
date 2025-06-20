@@ -164,9 +164,9 @@ def main():
         else:
             print("⚠️ No output from meshtastic to process.")
 
-        print("\n✅ Export complete. Exiting automatically in 3 seconds...")
+        print("\n✅ Export complete. Program Termination in 3 seconds...")
         time.sleep(3)
-        print("👋 Exiting. Stay connected!")
+        print("👋 Program Terminated. Goodbye!")
         break
 
 
