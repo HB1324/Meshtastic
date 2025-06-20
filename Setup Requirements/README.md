@@ -26,7 +26,7 @@ When executed, this batch file will:
 
 ## ▶️ How to Use
 
-1. Download the `setup_meshtastic_env.bat` file to your Windows machine.  
+1. Download the `setup_meshtastic.bat` file to your Windows machine.  
 2. Right-click the file and choose **Run as administrator** (recommended).  
 3. Follow the command prompt as it executes each step.  
 4. Press any key to close the window when it says `Press any key to continue...`.  
