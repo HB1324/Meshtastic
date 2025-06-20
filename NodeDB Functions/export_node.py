@@ -49,12 +49,23 @@ def get_meshtastic_output():
 
 
 def clean_text(text):
-    """Removes special characters and normalizes spaces for CSV output."""
+    """Cleans text for CSV output by removing emojis, degree symbols, and unprintable characters."""
     if not isinstance(text, str):
         return text
-    text = text.replace('\u00A0', ' ')
+
+    # Normalize Unicode
     text = unicodedata.normalize('NFKD', text)
+
+    # Remove degree symbol and non-breaking space
+    text = text.replace('°', '')
+    text = text.replace('\u00A0', ' ')
+
+    # Remove control characters (invisible junk)
     text = ''.join(c for c in text if not unicodedata.category(c).startswith('C'))
+
+    # Remove any character that isn't basic ASCII (optional, aggressive filter)
+    text = ''.join(c for c in text if 32 <= ord(c) <= 126)
+
     return text.strip()
 
 
@@ -79,7 +90,8 @@ def parse_meshtastic_table(output):
 
             lat = row.get('Latitude', '')
             lon = row.get('Longitude', '')
-            coords = f"{lat} {lon}" if lat and lon else ''
+            coords_raw = f"{lat} {lon}" if lat and lon else ''
+            coords = clean_text(coords_raw)
 
             last_heard_raw = row.get('LastHeard', '')
             last_heard_date = ''
@@ -139,7 +151,6 @@ def write_csv(rows, filename='nodes.csv'):
     print(f"✅ CSV written to '{filename}' with {len(rows)} rows.")
 
 
-
 def main():
     while True:
         print("\n🚀 Starting Meshtastic node export...\n")
@@ -157,7 +168,6 @@ def main():
         time.sleep(3)
         print("👋 Exiting. Stay connected!")
         break
-
 
 
 if __name__ == "__main__":
