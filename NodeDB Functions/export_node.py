@@ -141,8 +141,10 @@ def main():
     ports = find_all_meshtastic_ports()
 
     if not ports:
-        print("🚫 No Meshtastic devices found. Exiting.")
-        return
+        print("🚫 No Meshtastic devices found. Program Termination in 3 seconds...")
+        time.sleep(3)
+        print("👋 Goodbye!")
+    return
 
     for port in ports:
         print(f"\n🚀 Starting export for device on {port}...")
@@ -156,7 +158,7 @@ def main():
         else:
             print(f"⚠️ No output from device {port} to process.")
 
-    print("\n✅ All devices processed. Program Terminated in 3 seconds...")
+    print("\n✅ All devices processed. Program Termination in 3 seconds...")
     time.sleep(3)
     print("👋 Goodbye!")
 
