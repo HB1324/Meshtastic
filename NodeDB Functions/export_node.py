@@ -1,6 +1,7 @@
 import csv
 import re
 import os
+import time
 import subprocess
 from datetime import datetime
 from serial.tools import list_ports
@@ -8,7 +9,6 @@ import unicodedata
 
 
 def find_all_meshtastic_ports():
-    """Returns a list of all ports that appear to be Meshtastic devices."""
     ports = list_ports.comports()
     matched_ports = []
     for port in ports:
@@ -21,7 +21,6 @@ def find_all_meshtastic_ports():
 
 
 def get_meshtastic_output(port):
-    """Gets the raw --nodes output for a given port."""
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
 
@@ -49,7 +48,7 @@ def get_meshtastic_output(port):
 
 def clean_text(text):
     if not isinstance(text, str):
-        return text
+        text = str(text)
 
     text = unicodedata.normalize('NFKD', text)
     text = text.replace('°', '')
@@ -112,6 +111,13 @@ def parse_meshtastic_table(output):
     return rows
 
 
+def wrap_for_excel_safe(value):
+    val = clean_text(value)
+    if val.replace('.', '', 1).isdigit() and len(val) > 8:
+        return f'="{val}"'
+    return val
+
+
 def write_csv(rows, port, filename_prefix='nodes'):
     safe_port = port.replace(':', '').replace('/', '_')
     filename = f"{filename_prefix}_{safe_port}.csv"
@@ -122,10 +128,10 @@ def write_csv(rows, port, filename_prefix='nodes'):
     ]
 
     with open(filename, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer = csv.DictWriter(f, fieldnames=fieldnames, quoting=csv.QUOTE_MINIMAL)
         writer.writeheader()
         for row in rows:
-            cleaned_row = {k: clean_text(v) for k, v in row.items()}
+            cleaned_row = {k: wrap_for_excel_safe(v) for k, v in row.items()}
             writer.writerow(cleaned_row)
     print(f"✅ CSV written to '{filename}' with {len(rows)} rows.")
 
@@ -150,7 +156,9 @@ def main():
         else:
             print(f"⚠️ No output from device {port} to process.")
 
-    print("\n✅ All devices processed. Program Terminated.")
+    print("\n✅ All devices processed. Program Terminated in 3 seconds...")
+    time.sleep(3)
+    print("👋 Goodbye!")
 
 
 if __name__ == "__main__":
