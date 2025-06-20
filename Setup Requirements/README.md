@@ -1,4 +1,4 @@
-readme_content = """
+
 # ⚙️ Meshtastic Environment Setup Script
 
 ---
@@ -9,6 +9,8 @@ This batch script has been tested and is safe to use on supported Windows machin
 However, due to Windows security features, your PC may display warnings when running this program (such as **"Windows protected your PC"**).  
 These warnings are standard safety measures from Microsoft to prevent unrecognized programs from running automatically.  
 You can safely proceed by choosing **More info** and then **Run anyway** if you trust this source.
+
+If you do not trust the source, feel free to complete the steps on your own here at (https://meshtastic.org/docs/software/python/cli/)
 
 ---
 
