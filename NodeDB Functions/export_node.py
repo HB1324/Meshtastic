@@ -1,5 +1,4 @@
 import csv
-import re
 import os
 import time
 import subprocess
