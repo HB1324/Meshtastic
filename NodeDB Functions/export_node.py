@@ -49,7 +49,6 @@ def get_meshtastic_output(port):
 def clean_text(text):
     if not isinstance(text, str):
         text = str(text)
-
     text = unicodedata.normalize('NFKD', text)
     text = text.replace('°', '')
     text = text.replace('\u00A0', ' ')
@@ -60,53 +59,67 @@ def clean_text(text):
 
 def parse_meshtastic_table(output):
     lines = output.strip().splitlines()
-    data_lines = [line for line in lines if re.match(r'^\s*│', line)]
+    data_lines = [line for line in lines if line.strip().startswith('│')]
 
-    if not data_lines:
-        print("⚠️ No data lines found in output.")
+    # Locate the header line
+    header_line = None
+    for line in data_lines:
+        if "User" in line and "ID" in line and "Role" in line:
+            header_line = line
+            break
+
+    if not header_line:
+        print("⚠️ Could not detect a valid header line.")
         return []
 
-    header_line = data_lines[0]
     headers = [col.strip() for col in header_line.split('│') if col.strip()]
-    timestamp_now = datetime.now().date().isoformat()
+    start_index = data_lines.index(header_line) + 1
+    data_lines = data_lines[start_index:]
+
     rows = []
+    timestamp_now = datetime.now().date().isoformat()
 
-    for line in data_lines[1:]:
+    for line in data_lines:
+        if "╞" in line or len(line.strip()) == 0:
+            continue
+
         columns = [col.strip() for col in line.split('│') if col.strip()]
-        if len(columns) == len(headers):
-            row = dict(zip(headers, columns))
-            lat = row.get('Latitude', '')
-            lon = row.get('Longitude', '')
-            coords = clean_text(f"{lat} {lon}" if lat and lon else '')
+        if len(columns) != len(headers):
+            print(f"⚠️ Skipping malformed row (expected {len(headers)} cols): {line}")
+            continue
 
-            last_heard_raw = row.get('LastHeard', '')
-            last_heard_date = ''
-            if last_heard_raw:
-                try:
-                    dt = datetime.strptime(last_heard_raw, "%Y-%m-%d %H:%M:%S")
-                    last_heard_date = dt.date().isoformat()
-                except ValueError:
-                    last_heard_date = last_heard_raw
+        row = dict(zip(headers, columns))
 
-            clean_row = {
-                'Timestamp': timestamp_now,
-                'Hardware Model': row.get('Hardware', ''),
-                'Long Name': row.get('User', ''),
-                'Short Name': row.get('AKA', ''),
-                'User ID': row.get('ID', '')[-4:],
-                'Role': row.get('Role', ''),
-                'Position': coords,
-                'Battery': row.get('Battery', ''),
-                'Channel util.': row.get('Channel util.', ''),
-                'Tx air util.': row.get('Tx air util.', ''),
-                'SNR': row.get('SNR', ''),
-                'Hops': row.get('Hops', ''),
-                'LastHeard': last_heard_date
-            }
+        lat = row.get('Latitude', '')
+        lon = row.get('Longitude', '')
+        coords = clean_text(f"{lat} {lon}" if lat and lon else '')
 
-            rows.append(clean_row)
-        else:
-            print(f"⚠️ Skipping malformed row: {line.encode('utf-8', errors='replace').decode('utf-8')}")
+        last_heard_raw = row.get('LastHeard', '')
+        last_heard_date = ''
+        if last_heard_raw:
+            try:
+                dt = datetime.strptime(last_heard_raw, "%Y-%m-%d %H:%M:%S")
+                last_heard_date = dt.date().isoformat()
+            except ValueError:
+                last_heard_date = last_heard_raw
+
+        clean_row = {
+            'Timestamp': timestamp_now,
+            'Hardware Model': row.get('Hardware', ''),
+            'Long Name': row.get('User', ''),
+            'Short Name': row.get('AKA', ''),
+            'User ID': row.get('ID', '')[-4:],
+            'Role': row.get('Role', ''),
+            'Position': coords,
+            'Battery': row.get('Battery', ''),
+            'Channel util.': row.get('Channel util.', ''),
+            'Tx air util.': row.get('Tx air util.', ''),
+            'SNR': row.get('SNR', ''),
+            'Hops': row.get('Hops', ''),
+            'LastHeard': last_heard_date
+        }
+
+        rows.append(clean_row)
 
     return rows
 
@@ -144,7 +157,7 @@ def main():
         print("🚫 No Meshtastic devices found. Program Termination in 3 seconds...")
         time.sleep(3)
         print("👋 Goodbye!")
-
+        return
 
     for port in ports:
         print(f"\n🚀 Starting export for device on {port}...")
