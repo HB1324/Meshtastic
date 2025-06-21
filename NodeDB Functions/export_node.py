@@ -144,7 +144,7 @@ def main():
         print("🚫 No Meshtastic devices found. Program Termination in 3 seconds...")
         time.sleep(3)
         print("👋 Goodbye!")
-    return
+
 
     for port in ports:
         print(f"\n🚀 Starting export for device on {port}...")
