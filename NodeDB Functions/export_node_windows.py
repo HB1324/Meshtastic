@@ -71,7 +71,9 @@ def parse_meshtastic_table(output):
         print("⚠️ Could not detect a valid header line.")
         return []
 
-    headers = [col.strip() for col in header_line.split('│') if col.strip()]
+    header_cells = [col.strip() for col in header_line.split('│') if col.strip()]
+    header_map = {name: idx for idx, name in enumerate(header_cells)}
+
     start_index = data_lines.index(header_line) + 1
     data_lines = data_lines[start_index:]
 
@@ -82,18 +84,23 @@ def parse_meshtastic_table(output):
         if "╞" in line or len(line.strip()) == 0:
             continue
 
-        columns = [col.strip() for col in line.split('│') if col.strip()]
-        if len(columns) != len(headers):
-            print(f"⚠️ Skipping malformed row (expected {len(headers)} cols): {line}")
+        data_cells = [col.strip() for col in line.split('│') if col.strip()]
+        if len(data_cells) < len(header_cells):
+            print(f"⚠️ Skipping malformed row (too few columns): {line}")
             continue
 
-        row = dict(zip(headers, columns))
+        # Trim any extra trailing columns (e.g., '2 days ago')
+        data_cells = data_cells[:len(header_cells)]
 
-        lat = row.get('Latitude', '')
-        lon = row.get('Longitude', '')
+        def get(col_name):
+            idx = header_map.get(col_name)
+            return data_cells[idx] if idx is not None and idx < len(data_cells) else ''
+
+        lat = get('Latitude')
+        lon = get('Longitude')
         coords = clean_text(f"{lat} {lon}" if lat and lon else '')
 
-        last_heard_raw = row.get('LastHeard', '')
+        last_heard_raw = get('LastHeard')
         last_heard_date = ''
         if last_heard_raw:
             try:
@@ -104,17 +111,17 @@ def parse_meshtastic_table(output):
 
         clean_row = {
             'Timestamp': timestamp_now,
-            'Hardware Model': row.get('Hardware', ''),
-            'Long Name': row.get('User', ''),
-            'Short Name': row.get('AKA', ''),
-            'User ID': row.get('ID', '')[-4:],
-            'Role': row.get('Role', ''),
+            'Hardware Model': get('Hardware'),
+            'Long Name': get('User'),
+            'Short Name': get('AKA'),
+            'User ID': get('ID')[-4:],
+            'Role': get('Role'),
             'Position': coords,
-            'Battery': row.get('Battery', ''),
-            'Channel util.': row.get('Channel util.', ''),
-            'Tx air util.': row.get('Tx air util.', ''),
-            'SNR': row.get('SNR', ''),
-            'Hops': row.get('Hops', ''),
+            'Battery': get('Battery'),
+            'Channel util.': get('Channel util.'),
+            'Tx air util.': get('Tx air util.'),
+            'SNR': get('SNR'),
+            'Hops': get('Hops'),
             'LastHeard': last_heard_date
         }
 
